@@ -1,5 +1,6 @@
 
 #include <mabstractinputmethod.h>
+#include <QRect>
 
 class QGraphicsObject;
 class QDeclarativeComponent;
@@ -10,6 +11,9 @@ class QGraphicsScene;
 class FcitxHost: public MAbstractInputMethod
 {
     Q_OBJECT
+    Q_PROPERTY( int screenWidth READ screenWidth NOTIFY screenWidthChanged )
+    Q_PROPERTY( int screenHeight READ screenHeight NOTIFY screenHeightChanged )
+    Q_PROPERTY( QRect cursorRect READ cursorRect NOTIFY cursorRectChanged )
 public:
 
     FcitxHost(MAbstractInputMethodHost *host,
@@ -56,10 +60,18 @@ public:
     void resetVirtualKeyboardShiftState();
     void resetVirtualKeyboardLatchedShiftState();
     
+    int screenWidth();
+    int screenHeight();
+    QRect cursorRect();
+signals:
+    void screenWidthChanged( int width ) ;
+    void screenHeightChanged( int height ) ;
+    void cursorRectChanged( QRect& cursorRect ) ;
 private:
     QGraphicsScene* m_scene;
     MImGraphicsView* m_view;
     QDeclarativeEngine* m_engine;
     QDeclarativeComponent* m_component;
     QGraphicsObject* m_content;
+    QRect m_cursorRect;
 };

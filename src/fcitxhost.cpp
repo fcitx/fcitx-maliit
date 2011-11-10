@@ -3,6 +3,7 @@
 #include <QGraphicsScene>
 #include <QDeclarativeEngine>
 #include <QDeclarativeComponent>
+#include <QDeclarativeContext>
 #include <QGraphicsObject>
 
 #include <mabstractinputmethodhost.h>
@@ -34,6 +35,7 @@ FcitxHost::FcitxHost(MAbstractInputMethodHost* host, QWidget* mainWindow)
     m_content( qobject_cast<QGraphicsObject*>( m_component->create() )  )
 {
     m_scene->addItem( m_content ) ;
+    m_engine->rootContext()->setContextProperty("fcitx", this);
 }
 
 FcitxHost::~FcitxHost()
@@ -73,7 +75,12 @@ void FcitxHost::setPreedit(const QString& preeditString, int cursorPosition)
 
 void FcitxHost::update()
 {
-    MAbstractInputMethod::update();
+    bool flag ;
+    const QRect cursorRect( inputMethodHost()->cursorRectangle( flag ) ) ;
+    if ( flag && m_cursorRect != cursorRect ) {
+        m_cursorRect = cursorRect ;
+        emit cursorRectChanged( m_cursorRect ) ;
+    }
 }
 
 void FcitxHost::reset()
@@ -149,4 +156,19 @@ void FcitxHost::setKeyOverrides(const QMap< QString, QSharedPointer< MKeyOverrid
 QList< MAbstractInputMethod::MInputMethodSubView > FcitxHost::subViews(MInputMethod::HandlerState state) const
 {
     return MAbstractInputMethod::subViews(state);
+}
+
+int FcitxHost::screenWidth()
+{
+    return defaultScreenRect().width();
+}
+
+int FcitxHost::screenHeight()
+{
+    return defaultScreenRect().height();
+}
+
+QRect FcitxHost::cursorRect()
+{
+    return m_cursorRect;
 }

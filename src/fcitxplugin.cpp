@@ -41,3 +41,5 @@ QSet< MInputMethod::HandlerState > FcitxPlugin::supportedStates() const
     result << MInputMethod::OnScreen << MInputMethod::Hardware;
     return result;
 }
+
+Q_EXPORT_PLUGIN2(meego-fcitx, FcitxPlugin)

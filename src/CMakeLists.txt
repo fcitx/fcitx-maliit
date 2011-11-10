@@ -6,6 +6,20 @@ set(fcitx_maliit_SRCS
     fcitxhost.cpp
     fcitxsettings.cpp
 )
-qt4_automoc(${fcitx_maliit_SRCS})
-add_library(fcitx-maliit MODULE ${fcitx_maliit_SRCS})
-target_link_libraries(fcitx-maliit ${QT_QTCORE_LIBRARY})
+
+
+set(fcitx_maliit_MOC_SRCS
+    fcitxhost.h
+    fcitxplugin.h
+    fcitxsettings.h
+    keyboardwidget.h
+)
+
+qt4_wrap_cpp(fcitx_maliit_MOCS ${fcitx_maliit_MOC_SRCS})
+add_library(fcitx-maliit MODULE ${fcitx_maliit_SRCS} ${fcitx_maliit_MOCS})
+target_link_libraries(fcitx-maliit
+                      ${QT_QTCORE_LIBRARY}
+                      ${QT_QTGUI_LIBRARY}
+                      ${QT_QTDECLARATIVE_LIBRARY}
+                      ${MALIIT_PLUGINS_LIBRARIES}
+)
