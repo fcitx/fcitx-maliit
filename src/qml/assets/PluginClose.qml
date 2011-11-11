@@ -31,45 +31,17 @@
 
 import Qt 4.7
 
-Rectangle {
-    KeyStyle {
-        id: keyStyle
-    }
+//! This component is used to close QML plugin by veritical flicking
+Flickable {
+    id: flickableCloseKeyboard
+    property int variationX: 100
 
-    property string caption: ""
-    property string captionShifted: ""
-    property int fontSize: keyStyle.fontSize
-    property string symView: ""
-    property string symView2: ""
+    anchors.fill: parent
+    flickableDirection: Flickable.VerticalFlick
 
-    radius:  8
-    color: mouse_area.containsMouse ? keyStyle.backgroundPressed 
-                                    : keyStyle.background
-
-    MouseArea {
-        id: mouse_area
-        anchors.fill: parent
-
-        onPressed: {
-            parent.state = "mouse_down";
-            MInputMethodQuick.sendPreedit(key_label.text);
-        }
-
-        onReleased: {
-            MInputMethodQuick.sendCommit(key_label.text)
-            isShifted = isShiftLocked ? isShifted : false
-        }
-    }
-
-    Text {
-        id: key_label
-        anchors.centerIn: parent
-        horizontalAlignment: Text.AlignHCenter
-        verticalAlignment: Text.AlignVCenter
-        font.family: "sans"
-        font.pixelSize: keyStyle.fontSize
-        color: keyStyle.fontColor
-        text: (inSymView && symView.length) > 0 ? (inSymView2 ? symView2 : symView)
-	                                        : (isShifted ? captionShifted : caption)
+    onFlickStarted: {
+        Math.abs( contentX ) < variationX && contentY < 0 ? false
+                                                          : false
     }
 }
+

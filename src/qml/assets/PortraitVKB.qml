@@ -48,11 +48,11 @@ Column {
     property variant accents_row3: ["", "", "cç", "", "", "nñ", ""]
 
     property int columns: Math.max(row1.length, row2.length, row3.length)
-    property int keyWidth: (columns == 11) ? keyStyle.landscapeWidthNarrow
-                                           : keyStyle.landscapeWidth
-    property int keyHeight: keyStyle.landscapeHeight
-    property int keyMargin: (columns == 11) ? keyStyle.landscapeMarginNarrow
-                                            : keyStyle.landscapeMargin
+    property int keyWidth: (columns == 11) ? keyStyle.portraitWidthNarrow
+                                           : keyStyle.portraitWidth
+    property int keyHeight: keyStyle.portraitHeight
+    property int keyMargin: (columns == 11) ? keyStyle.portraitMarginNarrow
+                                            : keyStyle.portraitMargin
     property bool isShifted: false
     property bool isShiftLocked: false
     property bool inSymView: false
@@ -61,8 +61,8 @@ Column {
     Rectangle { //VKB background
         id: vkb
         color: vkbStyle.background
-        width: vkbStyle.landscapeWidth
-        height: vkbStyle.landscapeHeight
+        width: vkbStyle.portraitWidth
+        height: vkbStyle.portraitHeight
         z: 100
 
         Flickable {
@@ -71,7 +71,7 @@ Column {
             property int variationX: 100
             flickableDirection: Flickable.VerticalFlick
             onFlickStarted: {
-                Math.abs( contentX ) < variationX && contentY < 0 ? MInputMethodQuick.userHide() :
+                Math.abs( contentX ) < variationX && contentY < 0 ? fcitx.userHide() :
                                                                     false
             }
 
@@ -81,9 +81,9 @@ Column {
 
                 Column { //Holder for the VKB rows
                     anchors.fill: parent
-                    anchors.topMargin: 4
+                    anchors.topMargin: 8
                     anchors.horizontalCenter: parent.horizontalCenter
-                    spacing: 12
+                    spacing: 16
 
                     Row { //Row 1
                         anchors.horizontalCenter: parent.horizontalCenter
@@ -98,11 +98,11 @@ Column {
                                 symView2: row1[index][2]
                             }
                         }
-
                     } //end Row1
 
                     Row { //Row 2
                         anchors.horizontalCenter: parent.horizontalCenter
+
                         spacing: keyMargin
                         Repeater {
                             model: row2
@@ -118,9 +118,9 @@ Column {
 
                     Row { //Row 3
                         anchors.horizontalCenter: parent.horizontalCenter
-                        spacing: (columns == 11) ? 54 : 26
+                        spacing: (columns == 11) ? 32 : 16
                         FunctionKey {
-                            width: 100; height: keyHeight
+                            width: 56; height: keyHeight
                             icon: inSymView ? ""
                                             : (isShiftLocked) ? "icon-m-input-methods-capslock.svg"
                                                               : (isShifted) ? "icon-m-input-methods-shift-uppercase.svg"
@@ -161,37 +161,37 @@ Column {
                             }
                         }
                         FunctionKey {
-                            width: 100; height: keyHeight
+                            width: 56; height: keyHeight
                             icon: "icon-m-input-methods-backspace.svg"
-                            onClickedPass: { MInputMethodQuick.sendCommit("\b"); }
+                            onClickedPass: { fcitx.sendCommit("\b"); }
                         }
                     } //end Row3
 
                     Row { //Row 4
                         anchors.horizontalCenter: parent.horizontalCenter
-                        spacing: (columns == 11) ? 32 : 26
+                        spacing: (columns == 11) ? 19 : 16
                         FunctionKey {
-                            width: 150; height: keyHeight
+                            width: 88; height: keyHeight
                             caption: "?123"
                             onClickedPass: { inSymView = (!inSymView) }
                         }
                         Row {
-                            spacing: keyMargin
-                            CharacterKey { caption: ","; captionShifted: ","; width: 120; height: keyHeight }
-                            CharacterKey { caption: " "; width: 228; height: keyHeight }
-                            CharacterKey { caption: "."; captionShifted: "."; width: 120; height: keyHeight }
+                            spacing: 8
+                            CharacterKey { caption: ","; captionShifted: ","; width: 56; height: keyHeight }
+                            CharacterKey { caption: " "; width: 136; height: keyHeight }
+                            CharacterKey { caption: "."; captionShifted: "."; width: 56; height: keyHeight }
                         }
                         FunctionKey {
-                            width: 150; height: keyHeight
-                            icon: MInputMethodQuick.actionKeyOverride.icon
-                            caption: MInputMethodQuick.actionKeyOverride.label
+                            width: 88; height: keyHeight
+                            icon: ""
+                            caption: ""
                             onReleased: {
-                                MInputMethodQuick.activateActionKey()
+                                fcitx.activateActionKey()
                             }
                         }
                     } //end Row4
                 }//end Column
-            }//end Rectangle
+            }// end Rectangle
         }//end Flickable
     } //end VKB area
 } //end VKB

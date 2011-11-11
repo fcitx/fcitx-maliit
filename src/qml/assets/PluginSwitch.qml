@@ -31,17 +31,17 @@
 
 import Qt 4.7
 
-//! This component is used to close QML plugin by veritical flicking
+//! This component is used to swith between plugins by horizontally flicking on QML keyboard
 Flickable {
-    id: flickableCloseKeyboard
-    property int variationX: 100
+    id: flickablePluginSwitch
 
+    property int variationY: 25
     anchors.fill: parent
-    flickableDirection: Flickable.VerticalFlick
+    flickableDirection: Flickable.HorizontalFlick
 
     onFlickStarted: {
-        Math.abs( contentX ) < variationX && contentY < 0 ? MInputMethodQuick.userHide()
-                                                          : false
+        Math.abs(contentY) < variationY ? ( contentX > 0 ? 1 : 1 )
+                                        : false
     }
 }
 

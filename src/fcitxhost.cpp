@@ -5,6 +5,7 @@
 #include <QDeclarativeComponent>
 #include <QDeclarativeContext>
 #include <QGraphicsObject>
+#include <QDebug>
 
 #include <mabstractinputmethodhost.h>
 #include <mimgraphicsview.h>
@@ -18,8 +19,12 @@
 namespace {
     QRect defaultScreenRect(QWidget *w = 0)
     {
-        if (not QApplication::desktop() || not w) {
+        if (not QApplication::desktop()) {
             return QRect();
+        }
+        
+        if (not w) {
+            return QApplication::desktop()->screenGeometry();
         }
 
         return QApplication::desktop()->screenGeometry(w);
@@ -31,11 +36,33 @@ FcitxHost::FcitxHost(MAbstractInputMethodHost* host, QWidget* mainWindow)
     m_scene (new QGraphicsScene( defaultScreenRect(), this )),
     m_view( new MImGraphicsView( m_scene, mainWindow ) ) ,
     m_engine( new QDeclarativeEngine( this ) ),
-    m_component( new QDeclarativeComponent( m_engine, QUrl( QML_PATH ) ) ),
-    m_content( qobject_cast<QGraphicsObject*>( m_component->create() )  )
+    m_component(0),
+    m_content( 0 ),
+    m_appOrientation("0")
 {
-    m_scene->addItem( m_content ) ;
     m_engine->rootContext()->setContextProperty("fcitx", this);
+    m_component = new QDeclarativeComponent( m_engine, QUrl( QML_PATH ) );
+    m_content = qobject_cast<QGraphicsObject*>( m_component->create() );
+    m_scene->addItem( m_content ) ;
+    
+    
+    QWidget* viewport = m_view->viewport() ;
+
+    if ( viewport->nativeParentWidget() )
+        viewport = viewport->nativeParentWidget() ;
+
+    const QRect& rect( defaultScreenRect( viewport ) ) ;
+    m_view->resize( rect.size() ) ;
+    m_view->setMinimumSize(1, 1);
+    m_view->setMaximumSize(rect.size());
+    m_view->setSceneRect( rect ) ;
+    m_view->show() ;
+    m_view->setFrameShape( QFrame::NoFrame ) ;
+    m_view->setHorizontalScrollBarPolicy( Qt::ScrollBarAlwaysOff ) ;
+    m_view->setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOff ) ;
+    
+    qDebug() << rect;
+    qDebug() << m_view->isVisible() << mainWindow->isVisible();
 }
 
 FcitxHost::~FcitxHost()
@@ -62,15 +89,28 @@ void FcitxHost::handleFocusChange(bool focusIn)
 
 void FcitxHost::show()
 {
+    if (m_content)
+        m_content->show();
+    
+    const QRegion region( m_inputMethodArea ) ;
+    inputMethodHost()->setScreenRegion( region ) ;
+    inputMethodHost()->setInputMethodArea( region ) ;
 }
 
 void FcitxHost::hide()
 {
+    if (m_content)
+        m_content->hide();
+    
+    const QRegion region( m_inputMethodArea ) ;
+    inputMethodHost()->setScreenRegion( region ) ;
+    inputMethodHost()->setInputMethodArea( region ) ;
 }
 
 void FcitxHost::setPreedit(const QString& preeditString, int cursorPosition)
 {
-    MAbstractInputMethod::setPreedit(preeditString, cursorPosition);
+    Q_UNUSED(preeditString);
+    Q_UNUSED(cursorPosition);
 }
 
 void FcitxHost::update()
@@ -105,7 +145,11 @@ void FcitxHost::handleAppOrientationAboutToChange(int angle)
 
 void FcitxHost::handleAppOrientationChanged(int angle)
 {
-    MAbstractInputMethod::handleAppOrientationChanged(angle);
+    if (m_appOrientation.toInt() != angle)
+    {
+        m_appOrientation = QString::number(angle);
+        emit appOrientationChanged(m_appOrientation);
+    }
 }
 
 void FcitxHost::setToolbar(QSharedPointer< const MToolbarData > toolbar)
@@ -140,7 +184,7 @@ void FcitxHost::setActiveSubView(const QString& subViewId, MInputMethod::Handler
 
 QString FcitxHost::activeSubView(MInputMethod::HandlerState state) const
 {
-    return MAbstractInputMethod::activeSubView(state);
+    return "" ;
 }
 
 void FcitxHost::showLanguageNotification()
@@ -155,7 +199,7 @@ void FcitxHost::setKeyOverrides(const QMap< QString, QSharedPointer< MKeyOverrid
 
 QList< MAbstractInputMethod::MInputMethodSubView > FcitxHost::subViews(MInputMethod::HandlerState state) const
 {
-    return MAbstractInputMethod::subViews(state);
+    return QList<MAbstractInputMethod::MInputMethodSubView>() ;
 }
 
 int FcitxHost::screenWidth()
@@ -171,4 +215,33 @@ int FcitxHost::screenHeight()
 QRect FcitxHost::cursorRect()
 {
     return m_cursorRect;
+}
+
+const QString& FcitxHost::appOrientation()
+{
+    qDebug() << m_appOrientation;
+    return m_appOrientation;
+}
+
+void FcitxHost::setScreenRegion(const QRect& area)
+{
+
+}
+
+void FcitxHost::setInputMethodArea(const QRect& area)
+{
+    if ( m_inputMethodArea != area ) {
+        m_inputMethodArea = area;
+    }
+    qDebug() << m_inputMethodArea;
+}
+
+void FcitxHost::sendCommit(const QString& text)
+{
+
+}
+
+void FcitxHost::sendPreedit(const QString& text)
+{
+
 }

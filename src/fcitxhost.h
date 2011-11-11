@@ -1,6 +1,7 @@
 
 #include <mabstractinputmethod.h>
 #include <QRect>
+#include <QRegion>
 
 class QGraphicsObject;
 class QDeclarativeComponent;
@@ -14,6 +15,7 @@ class FcitxHost: public MAbstractInputMethod
     Q_PROPERTY( int screenWidth READ screenWidth NOTIFY screenWidthChanged )
     Q_PROPERTY( int screenHeight READ screenHeight NOTIFY screenHeightChanged )
     Q_PROPERTY( QRect cursorRect READ cursorRect NOTIFY cursorRectChanged )
+    Q_PROPERTY( QString appOrientation READ appOrientation NOTIFY appOrientationChanged )
 public:
 
     FcitxHost(MAbstractInputMethodHost *host,
@@ -63,10 +65,17 @@ public:
     int screenWidth();
     int screenHeight();
     QRect cursorRect();
+    const QString& appOrientation();
+    
+    Q_INVOKABLE void setScreenRegion( const QRect &area ) ;
+    Q_INVOKABLE void setInputMethodArea( const QRect &area ) ;
+    Q_INVOKABLE void sendCommit( const QString& text ) ;
+    Q_INVOKABLE void sendPreedit( const QString& text ) ;
 signals:
     void screenWidthChanged( int width ) ;
     void screenHeightChanged( int height ) ;
     void cursorRectChanged( QRect& cursorRect ) ;
+    void appOrientationChanged ( QString& appOrientation );
 private:
     QGraphicsScene* m_scene;
     MImGraphicsView* m_view;
@@ -74,4 +83,6 @@ private:
     QDeclarativeComponent* m_component;
     QGraphicsObject* m_content;
     QRect m_cursorRect;
+    QRegion m_inputMethodArea;
+    QString m_appOrientation;
 };

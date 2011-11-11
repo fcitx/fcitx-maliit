@@ -35,8 +35,8 @@ import "assets"
 Rectangle {
     id: canvas
     transformOrigin: Item.Center
-    width: MInputMethodQuick.screenWidth
-    height: MInputMethodQuick.screenHeight
+    width: fcitx.screenWidth
+    height: fcitx.screenHeight
     color: "transparent"
     opacity: 1
 
@@ -59,23 +59,22 @@ Rectangle {
         }
 
         Component.onCompleted: {
-            MInputMethodQuick.actionKeyOverride.setDefaultIcon("icon-m-input-methods-enter.svg")
-            MInputMethodQuick.actionKeyOverride.setDefaultLabel("")
         }
     }
 
     focus: true
-    state: MInputMethodQuick.appOrientation
+    state: fcitx.appOrientation
 
     states: [
         State {
             name: "0"
 
             StateChangeScript {
-                script: MInputMethodQuick.setInputMethodArea(
-                    Qt.rect((MInputMethodQuick.screenWidth - vkb_landscape.width) / 2,
-                            MInputMethodQuick.screenHeight - vkb_landscape.height,
-                            vkb_landscape.width, vkb_landscape.height))
+                script: {
+                    fcitx.setInputMethodArea(
+                        Qt.rect(0, fcitx.screenHeight - vkb_landscape.height,  
+                            vkb_landscape.width, vkb_landscape.height));
+                }
             }
 
             PropertyChanges {
@@ -102,8 +101,8 @@ Rectangle {
             name: "90"
 
             StateChangeScript {
-                script: MInputMethodQuick.setInputMethodArea(
-                    Qt.rect(0, (MInputMethodQuick.screenHeight - vkb_portrait.width) / 2,
+                script: fcitx.setInputMethodArea(
+                    Qt.rect(0, (fcitx.screenHeight - vkb_portrait.width) / 2,
                             vkb_portrait.height, vkb_portrait.width))
             }
 
@@ -131,8 +130,8 @@ Rectangle {
             name: "180"
 
             StateChangeScript {
-                script: MInputMethodQuick.setInputMethodArea(
-                    Qt.rect((MInputMethodQuick.screenWidth - vkb_landscape.width) / 2,
+                script: fcitx.setInputMethodArea(
+                    Qt.rect((fcitx.screenWidth - vkb_landscape.width) / 2,
                             0, vkb_landscape.width, vkb_landscape.height))
             }
 
@@ -160,9 +159,9 @@ Rectangle {
             name: "270"
 
             StateChangeScript {
-                script: MInputMethodQuick.setInputMethodArea(
-                    Qt.rect(MInputMethodQuick.screenWidth - vkb_portrait.height,
-                            (MInputMethodQuick.screenHeight - vkb_portrait.width) / 2,
+                script: fcitx.setInputMethodArea(
+                    Qt.rect(fcitx.screenWidth - vkb_portrait.height,
+                            (fcitx.screenHeight - vkb_portrait.width) / 2,
                             vkb_portrait.height, vkb_portrait.width))
             }
 
@@ -206,6 +205,5 @@ Rectangle {
             }
         }
     ]
-
 }
 

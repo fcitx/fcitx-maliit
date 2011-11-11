@@ -23,3 +23,6 @@ target_link_libraries(fcitx-maliit
                       ${QT_QTDECLARATIVE_LIBRARY}
                       ${MALIIT_PLUGINS_LIBRARIES}
 )
+
+install(TARGETS fcitx-maliit DESTINATION ${MALIIT_PLUGINS_INSTALL_DIR})
+install(DIRECTORY qml DESTINATION share/fcitx/maliit)
