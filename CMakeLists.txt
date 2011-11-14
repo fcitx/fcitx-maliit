@@ -10,6 +10,8 @@ _pkgconfig_invoke("maliit-plugins-0.80" MALIIT_PLUGINS INSTALL_DIR "" "--variabl
 
 message("maliit-plguins install dir: ${MALIIT_PLUGINS_INSTALL_DIR}")
 
+find_package(Fcitx 4.1.3 REQUIRED)
+
 set(prefix ${CMAKE_INSTALL_PREFIX})
 
 set(CMAKE_C_FLAGS "-Wall -Wextra -Wno-sign-compare -Wno-unused-parameter -fvisibility=hidden ${CMAKE_C_FLAGS}")

@@ -3,6 +3,11 @@
 #include <QRect>
 #include <QRegion>
 
+#include "org.freedesktop.DBus.h"
+#include "org.fcitx.Fcitx.InputMethod.h"
+#include "org.fcitx.Fcitx.InputContext.h"
+#include <fcitx-config/hotkey.h>
+
 class QGraphicsObject;
 class QDeclarativeComponent;
 class QDeclarativeEngine;
@@ -25,7 +30,7 @@ public:
     //! Creates MKeyboardHost instance and init()'s it.
     static FcitxHost * create(MAbstractInputMethodHost *host,
                               QWidget *mainWindow);
-    void init();
+    void createInputContext();
     
 
     //! reimp
@@ -59,9 +64,6 @@ public:
     virtual void setKeyOverrides(const QMap<QString, QSharedPointer<MKeyOverride> > &newOverrides);
     //! reimp_end
     
-    void resetVirtualKeyboardShiftState();
-    void resetVirtualKeyboardLatchedShiftState();
-    
     int screenWidth();
     int screenHeight();
     QRect cursorRect();
@@ -76,7 +78,18 @@ signals:
     void screenHeightChanged( int height ) ;
     void cursorRectChanged( QRect& cursorRect ) ;
     void appOrientationChanged ( QString& appOrientation );
+    
+private slots:    
+    void createInputContextFinished(QDBusPendingCallWatcher* watcher);
+    void commitString(const QString& text);
+    void closeIM();
+    void enableIM();
+    void updatePreedit(const QString& str, int cursorPos);
+    void forwardKey(uint keyval, uint state, int type);
+    void imChanged(const QString& service, const QString& oldowner, const QString& newowner);
+    
 private:
+    QDBusConnection m_connection;
     QGraphicsScene* m_scene;
     MImGraphicsView* m_view;
     QDeclarativeEngine* m_engine;
@@ -85,4 +98,12 @@ private:
     QRect m_cursorRect;
     QRegion m_inputMethodArea;
     QString m_appOrientation;
+    QString m_serviceName;
+    org::freedesktop::DBus* m_dbusproxy;
+    org::fcitx::Fcitx::InputMethod* m_improxy;
+    org::fcitx::Fcitx::InputContext* m_icproxy;
+    int m_id;
+    bool m_enable;
+    QString m_path;
+    HOTKEYS m_triggerKey[2];
 };
