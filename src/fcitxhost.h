@@ -8,6 +8,7 @@
 #include "org.fcitx.Fcitx.InputContext.h"
 #include <fcitx-config/hotkey.h>
 
+class FcitxImGraphicsView;
 class QGraphicsObject;
 class QDeclarativeComponent;
 class QDeclarativeEngine;
@@ -91,7 +92,7 @@ private slots:
 private:
     QDBusConnection m_connection;
     QGraphicsScene* m_scene;
-    MImGraphicsView* m_view;
+    FcitxImGraphicsView* m_view;
     QDeclarativeEngine* m_engine;
     QDeclarativeComponent* m_component;
     QGraphicsObject* m_content;

@@ -29,7 +29,7 @@
  *
  */
 
-import Qt 4.7
+import QtQuick 1.1
 import "assets"
 
 Rectangle {
@@ -72,7 +72,7 @@ Rectangle {
             StateChangeScript {
                 script: {
                     fcitx.setInputMethodArea(
-                        Qt.rect(0, fcitx.screenHeight - vkb_landscape.height,  
+                        Qt.rect((fcitx.screenWidth - vkb_landscape.width) / 2, fcitx.screenHeight - vkb_landscape.height,  
                             vkb_landscape.width, vkb_landscape.height));
                 }
             }

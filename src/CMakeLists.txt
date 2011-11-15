@@ -18,6 +18,7 @@ set(fcitx_maliit_SRCS
     fcitxplugin.cpp
     fcitxhost.cpp
     fcitxsettings.cpp
+    fcitximgraphicsview.cpp
 )
 
 
@@ -26,6 +27,7 @@ set(fcitx_maliit_MOC_SRCS
     fcitxplugin.h
     fcitxsettings.h
     keyboardwidget.h
+    fcitximgraphicsview.h
 )
 
 

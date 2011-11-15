@@ -6,6 +6,7 @@
 #include <QDeclarativeContext>
 #include <QGraphicsObject>
 #include <QDebug>
+#include <QKeyEvent>
 
 #include <mabstractinputmethodhost.h>
 #include <mimgraphicsview.h>
@@ -16,6 +17,7 @@
 
 #include "config.h"
 #include "fcitxhost.h"
+#include "fcitximgraphicsview.h"
 
 #define QML_PATH PREFIX "/share/fcitx/maliit/qml/meego-keyboard.qml"
 
@@ -38,13 +40,14 @@ FcitxHost::FcitxHost(MAbstractInputMethodHost* host, QWidget* mainWindow)
     : MAbstractInputMethod(host, mainWindow),
     m_connection(QDBusConnection::sessionBus()),
     m_scene (new QGraphicsScene( defaultScreenRect(), this )),
-    m_view( new MImGraphicsView( m_scene, mainWindow ) ) ,
+    m_view( new FcitxImGraphicsView( m_scene, mainWindow ) ) ,
     m_engine( new QDeclarativeEngine( this ) ),
     m_component(0),
     m_content( 0 ),
     m_appOrientation("0"),
     m_serviceName(QString("%1-%2").arg(FCITX_DBUS_SERVICE).arg(FcitxGetDisplayNumber())),
-    m_improxy(new org::fcitx::Fcitx::InputMethod(m_serviceName, FCITX_IM_DBUS_PATH, m_connection, this))
+    m_improxy(0),
+    m_icproxy(0)
 {   
     m_engine->rootContext()->setContextProperty("fcitx", this);
     m_component = new QDeclarativeComponent( m_engine, QUrl( QML_PATH ) );
@@ -66,17 +69,30 @@ FcitxHost::FcitxHost(MAbstractInputMethodHost* host, QWidget* mainWindow)
     m_view->setFrameShape( QFrame::NoFrame ) ;
     m_view->setHorizontalScrollBarPolicy( Qt::ScrollBarAlwaysOff ) ;
     m_view->setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOff ) ;
+    m_view->setInputMethodHost(inputMethodHost());
+        
+    QPalette pal = m_view->palette();
+    pal.setColor(m_view->backgroundRole(), Qt::transparent);
+    m_view->setPalette(pal);
 
     m_dbusproxy = new org::freedesktop::DBus("org.freedesktop.DBus", "/org/freedesktop/DBus", m_connection, this);
     connect(m_dbusproxy, SIGNAL(NameOwnerChanged(QString,QString,QString)), this, SLOT(imChanged(QString,QString,QString)));
-    
-    qDebug() << rect;
-    qDebug() << m_view->isVisible() << mainWindow->isVisible();
 }
 
 FcitxHost::~FcitxHost()
 {
-    
+    delete m_dbusproxy;
+    if (m_improxy)
+        delete m_improxy;
+    if (m_icproxy)
+    {
+        if (m_icproxy->isValid())
+        {
+            m_icproxy->DestroyIC();
+        }
+
+        delete m_icproxy;
+    }
 }
 
 FcitxHost* FcitxHost::create(MAbstractInputMethodHost* host, QWidget* mainWindow)
@@ -88,6 +104,7 @@ FcitxHost* FcitxHost::create(MAbstractInputMethodHost* host, QWidget* mainWindow
 
 void FcitxHost::createInputContext()
 {
+    m_improxy = new org::fcitx::Fcitx::InputMethod(m_serviceName, FCITX_IM_DBUS_PATH, m_connection, this);
 
     if (!m_improxy->isValid())
         return;
@@ -120,10 +137,11 @@ void FcitxHost::createInputContextFinished(QDBusPendingCallWatcher* watcher)
         connect(m_icproxy, SIGNAL(UpdatePreedit(QString,int)), this, SLOT(updatePreedit(QString, int)));
 
         if (m_icproxy->isValid())
+        {
             m_icproxy->FocusIn();
-
-        if (m_icproxy)
             m_icproxy->SetCapacity(CAPACITY_CLIENT_SIDE_UI);
+            m_icproxy->EnableIC();
+        }
     }
     delete watcher;
 }
@@ -131,6 +149,14 @@ void FcitxHost::createInputContextFinished(QDBusPendingCallWatcher* watcher)
 
 void FcitxHost::handleFocusChange(bool focusIn)
 {
+    if (m_icproxy && m_icproxy->isValid())
+    {
+        if (focusIn)
+            m_icproxy->FocusIn();
+        else
+            m_icproxy->FocusOut();
+    }
+
 }
 
 void FcitxHost::show()
@@ -215,7 +241,7 @@ void FcitxHost::processKeyEvent(QEvent::Type keyType, Qt::Key keyCode, Qt::Keybo
 
 void FcitxHost::handleClientChange()
 {
-    if (m_icproxy->isValid())
+    if (m_icproxy && m_icproxy->isValid())
         m_icproxy->Reset();
 }
 
@@ -280,12 +306,53 @@ void FcitxHost::setInputMethodArea(const QRect& area)
     if ( m_inputMethodArea != area ) {
         m_inputMethodArea = area;
     }
-    qDebug() << m_inputMethodArea;
+    qDebug() << "Area" << m_inputMethodArea;
 }
 
 void FcitxHost::sendCommit(const QString& text)
 {
-    inputMethodHost()->sendCommitString( text ) ;
+    FcitxKeySym sym = Key_None;
+    QKeyEvent *event = 0;
+    if ( text == "\b" ) {
+        event = new QKeyEvent( QEvent::KeyPress, Qt::Key_Backspace, Qt::NoModifier ) ;
+        sym = Key_BackSpace;
+    }
+    else if ( text == "\r\n" ) {
+        event = new QKeyEvent( QEvent::KeyPress, Qt::Key_Return, Qt::NoModifier ) ;
+        sym = Key_Return;
+    } else {
+        sym = (FcitxKeySym) text.toLocal8Bit().at(0);
+    }
+    
+    if (m_icproxy && m_icproxy->isValid())
+    {
+        
+        QDBusPendingReply< int > result =  m_icproxy->ProcessKeyEvent(sym,
+                                        0,
+                                        0,
+                                        FCITX_PRESS_KEY,
+                                        0
+                                        );
+        {
+            QEventLoop loop;
+            QDBusPendingCallWatcher watcher (result);
+            loop.connect(&watcher, SIGNAL(finished(QDBusPendingCallWatcher*)), SLOT(quit()));
+            loop.exec(QEventLoop::ExcludeUserInputEvents | QEventLoop::WaitForMoreEvents);
+        }
+        
+        
+        if (result.isError() || result.value() <= 0)
+        {
+            if (event)
+                inputMethodHost()->sendKeyEvent( *event ) ;
+        }
+        else
+        {
+            update();
+        }
+    }
+    else if (event)
+            inputMethodHost()->sendKeyEvent( *event ) ;
 }
 
 void FcitxHost::commitString(const QString& text)
@@ -295,7 +362,6 @@ void FcitxHost::commitString(const QString& text)
 
 void FcitxHost::sendPreedit(const QString& text)
 {
-
 }
 
 void FcitxHost::enableIM()
